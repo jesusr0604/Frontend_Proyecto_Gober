@@ -3,10 +3,10 @@ import { useState } from "react";
 import styles from "@/styles/Ticket.module.css";
 
 export default function Home() {
-  const [asunto, setAsunto] = useState("");
-  const [imagen, setImagen] = useState(null);
+  const [asunto, setAsunto]   = useState("");
+  const [imagen, setImagen]   = useState(null);
   const [preview, setPreview] = useState(null);
-  const [estado, setEstado] = useState(null); // { tipo: "exito"|"error", mensaje: "" }
+  const [estado, setEstado]   = useState(null); // { tipo: "exito"|"error", mensaje: "" }
   const [enviando, setEnviando] = useState(false);
 
   function handleImagen(e) {
@@ -28,29 +28,29 @@ export default function Home() {
     setEnviando(true);
 
     try {
-      // TODO: reemplazar esta sección con la llamada real a la API de Redmine
-      // cuando el equipo de backend/API tenga el endpoint listo.
-      //
-      // Ejemplo de cómo se haría:
-      //
-      // const formData = new FormData();
-      // formData.append("issue[subject]", asunto);
-      // if (imagen) formData.append("issue[uploads][][file]", imagen);
-      //
-      // const res = await fetch("/api/ticket", {
-      //   method: "POST",
-      //   body: formData,
-      // });
-      // if (!res.ok) throw new Error("Error al enviar");
+      const res = await fetch("/api/ticket", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          subject: asunto.trim(),
+          description: imagen ? `Adjunto: ${imagen.name}` : "",
+          priority_id: 2,
+        }),
+      });
 
-      // Simulación temporal:
-      await new Promise((r) => setTimeout(r, 1000));
-      setEstado({ tipo: "exito", mensaje: "Ticket enviado correctamente." });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Error al enviar");
+      }
+
+      const data = await res.json();
+      const id = data?.issue?.id ? ` (ID #${data.issue.id})` : "";
+      setEstado({ tipo: "exito", mensaje: `Ticket enviado correctamente${id}.` });
       setAsunto("");
       setImagen(null);
       setPreview(null);
     } catch (err) {
-      setEstado({ tipo: "error", mensaje: "No se pudo enviar el ticket. Intenta de nuevo." });
+      setEstado({ tipo: "error", mensaje: err.message || "No se pudo enviar el ticket. Intenta de nuevo." });
     } finally {
       setEnviando(false);
     }
